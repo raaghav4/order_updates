@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DS TEXTILE - Live Order Updates. Real-time transparency in every order.">
+    <title>DS TEXTILE - Live Order Updates</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; line-height: 1.6; }
+        .background-watermark { position: fixed; inset: 0; z-index: 0; opacity: 0.05; background-image: url('images/logo.jpeg'); background-position: center; background-repeat: no-repeat; background-size: contain; pointer-events: none; }
+        .content-wrapper { position: relative; z-index: 10; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
+        header { background: linear-gradient(to right, #d97706, #eab308, #d97706); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); border-bottom: 4px solid #fbbf24; padding: 1.5rem 0; }
+        header h1 { font-size: 2.5rem; font-weight: bold; text-align: center; color: #000000; margin-bottom: 0.25rem; }
+        .subtitle { color: #000000; font-size: 1.25rem; font-weight: 600; text-align: center; }
+        main { padding: 2rem 0; }
+        .description-box { background: linear-gradient(to right, #eab308, #fbbf24); border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); padding: 1.5rem; margin-bottom: 1.5rem; text-align: center; border: 2px solid #fbbf24; }
+        .description-box p { font-size: 1.125rem; color: #000000; font-weight: 600; }
+        .update-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; background-color: rgba(17, 24, 39, 0.8); backdrop-filter: blur(10px); padding: 1rem; border-radius: 0.5rem; border: 1px solid #d97706; }
+        .update-info { font-size: 0.875rem; color: #fbbf24; }
+        .update-info .label { font-weight: 600; }
+        .update-info .value { color: #ffffff; margin-left: 0.5rem; }
+        .update-controls { display: flex; align-items: center; gap: 1rem; }
+        .total-orders { font-size: 0.875rem; font-weight: 600; color: #fbbf24; }
+        .total-orders span { color: #ffffff; }
+        .refresh-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background-color: #eab308; color: #000000; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .refresh-btn:hover { background-color: #fbbf24; transform: translateY(-1px); }
+        .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .refresh-btn.spinning .refresh-icon { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
+        .order-card { background-color: #ffffff; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); overflow: hidden; transition: all 0.3s; border: 2px solid #eab308; }
+        .order-card:hover { box-shadow: 0 10px 20px rgba(234, 179, 8, 0.4); transform: translateY(-4px); }
+        .order-header { background: linear-gradient(to right, #d97706, #eab308); color: #000000; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #fbbf24; }
+        .order-number { display: flex; align-items: center; gap: 0.5rem; font-weight: bold; font-size: 1.125rem; }
+        .order-date { font-size: 0.75rem; background-color: #000000; color: #fbbf24; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-weight: 600; }
+        .carousel-container { position: relative; width: 100%; height: 18rem; overflow: hidden; background-color: #f3f4f6; }
+        .carousel-slide { display: none; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease; cursor: pointer; }
+        .carousel-slide.active { display: block; }
+        .carousel-controls { position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 10px; z-index: 20; }
+        .carousel-dot { width: 10px; height: 10px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.5); border: 1px solid #d97706; cursor: pointer; transition: all 0.3s; }
+        .carousel-dot.active { background-color: #eab308; transform: scale(1.2); }
+        .carousel-nav { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(234, 179, 8, 0.8); color: #000000; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 20; transition: all 0.3s; }
+        .carousel-nav:hover { background-color: #fbbf24; transform: translateY(-50%) scale(1.1); }
+        .carousel-prev { left: 10px; }
+        .carousel-next { right: 10px; }
+        .image-counter { position: absolute; top: 10px; left: 10px; background-color: rgba(0, 0, 0, 0.7); color: white; padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; z-index: 10; }
+        .multi-image-indicator { position: absolute; top: 10px; right: 10px; background: linear-gradient(to right, #d97706, #eab308); color: #000000; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; z-index: 10; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+        .single-image-container { position: relative; background-color: #f3f4f6; height: 18rem; }
+        .single-image-container img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .image-label { position: absolute; top: 0.75rem; right: 0.75rem; background-color: #eab308; color: #000000; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+        .customer-details { padding: 1rem; background-color: #f9fafb; }
+        .customer-name-box { background-color: #ffffff; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #fbbf24; margin-bottom: 0.75rem; }
+        .customer-name-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem; }
+        .customer-name { font-size: 1.125rem; font-weight: bold; color: #111827; }
+        .details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 0.75rem; }
+        .detail-box { background-color: #ffffff; padding: 0.5rem; border-radius: 0.25rem; border: 1px solid #e5e7eb; }
+        .detail-label { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .detail-value { font-weight: 600; color: #111827; font-size: 0.75rem; }
+        .payment-badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; }
+        .payment-online { background-color: #d1fae5; color: #065f46; }
+        .payment-cod { background-color: #fef3c7; color: #92400e; }
+        .payment-proof-section { border-top: 2px solid #fbbf24; padding-top: 0.75rem; }
+        .payment-proof-header { background-color: #fef3c7; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem; text-align: center; }
+        .payment-proof-title { font-size: 0.75rem; color: #374151; text-transform: uppercase; font-weight: bold; }
+        .payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+        .payment-image-container { position: relative; border-radius: 0.5rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); height: 120px; }
+        .payment-grid img { width: 100%; height: 100%; object-fit: cover; border: 2px solid #86efac; cursor: pointer; transition: transform 0.3s; }
+        .payment-grid img:hover { transform: scale(1.05); }
+        .payment-count { background-color: #10b981; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px; }
+        .verified-badge { position: absolute; top: 0.5rem; right: 0.5rem; background-color: #10b981; color: #ffffff; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 0.25rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+        .loading, .error { text-align: center; padding: 3rem; background-color: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 0.5rem; border: 1px solid #fbbf24; margin: 2rem 0; }
+        .error { color: #ef4444; border-color: #ef4444; }
+        .newest-indicator { position: absolute; top: 10px; left: 10px; background: linear-gradient(to right, #ff0000, #ff9900); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 10; animation: pulse 2s infinite; box-shadow: 0 2px 8px rgba(255, 0, 0, 0.3); }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; cursor: pointer; }
+        .lightbox-img { max-width: 95%; max-height: 95%; object-fit: contain; border: 3px solid #eab308; border-radius: 10px; box-shadow: 0 0 40px rgba(234, 179, 8, 0.7); }
+        .lightbox-close { position: absolute; top: 20px; right: 30px; background: #eab308; color: #000; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 1001; transition: all 0.3s; }
+        .lightbox-close:hover { background: #fbbf24; transform: scale(1.1); }
+        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(234, 179, 8, 0.9); color: #000; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 28px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1001; transition: all 0.3s; }
+        .lightbox-nav:hover { background: rgba(251, 191, 36, 0.95); transform: translateY(-50%) scale(1.1); }
+        .lightbox-prev { left: 30px; }
+        .lightbox-next { right: 30px; }
+        .lightbox-counter { position: absolute; top: 30px; left: 30px; background: rgba(0, 0, 0, 0.7); color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; z-index: 1001; }
+        footer { background: linear-gradient(to right, #d97706, #eab308, #d97706); border-top: 4px solid #fbbf24; padding: 1.5rem 0; margin-top: 3rem; }
+        .footer-main { text-align: center; color: #000000; font-size: 0.875rem; font-weight: bold; }
+        .footer-sub { text-align: center; color: #000000; font-size: 0.875rem; font-weight: 600; margin-top: 0.25rem; }
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.875rem; }
+            .subtitle { font-size: 1rem; }
+            .description-box p { font-size: 1rem; }
+            .update-section { flex-direction: column; align-items: stretch; }
+            .update-controls { justify-content: space-between; width: 100%; }
+            .orders-grid { grid-template-columns: 1fr; }
+            .payment-grid { grid-template-columns: 1fr; }
+            .carousel-nav, .lightbox-nav { width: 40px; height: 40px; font-size: 20px; }
+            .lightbox-close { width: 40px; height: 40px; font-size: 20px; top: 15px; right: 15px; }
+            .lightbox-nav { width: 50px; height: 50px; font-size: 24px; }
+            .lightbox-prev { left: 15px; }
+            .lightbox-next { right: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-watermark"></div>
+    <div class="content-wrapper">
+        <header>
+            <div class="container">
+                <h1>DS TEXTILE</h1>
+                <p class="subtitle">Live Order Updates</p>
+            </div>
+        </header>
+        <main class="container">
+            <div class="description-box">
+                <p>🔍 Real-time transparency in every order. View complete order details with product images and payment confirmation.</p>
+            </div>
+            <div class="update-section">
+                <div class="update-info">
+                    <span class="label">Last Updated:</span>
+                    <span id="lastUpdated" class="value">Loading...</span>
+                </div>
+                <div class="update-controls">
+                    <div class="total-orders">
+                        Total Orders: <span id="totalOrders">0</span>
+                    </div>
+                    <button id="refreshBtn" class="refresh-btn">
+                        <svg class="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div id="loading" class="loading">
+                <p>Loading orders...</p>
+            </div>
+            <div id="error" class="error" style="display: none;">
+                <p>Failed to load orders. Please check data.json file exists and images are in the images/ folder.</p>
+            </div>
+            <div id="ordersGrid" class="orders-grid" style="display: none;"></div>
+        </main>
+        <footer>
+            <div class="container">
+                <p class="footer-main">© 2025 DS TEXTILE. All rights reserved.</p>
+                <p class="footer-sub">Building trust through transparency</p>
+            </div>
+        </footer>
+    </div>
+    <script>
+        const ordersGrid = document.getElementById('ordersGrid');
+        const lastUpdatedElement = document.getElementById('lastUpdated');
+        const totalOrdersElement = document.getElementById('totalOrders');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
+        let lightboxImages = [];
+        let lightboxCurrentIndex = 0;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrders();
+        });
+        
+        refreshBtn.addEventListener('click', function() {
+            refreshBtn.classList.add('spinning');
+            refreshBtn.disabled = true;
+            loadOrders().finally(function() {
+                setTimeout(function() {
+                    refreshBtn.classList.remove('spinning');
+                    refreshBtn.disabled = false;
+                }, 500);
+            });
+        });
+        
+        function loadOrders() {
+            return new Promise(function(resolve, reject) {
+                loadingElement.style.display = 'block';
+                errorElement.style.display = 'none';
+                ordersGrid.style.display = 'none';
+                fetch('data.json')
+                    .then(function(response) {
+                        if (!response.ok) throw new Error('Failed to load data.json');
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        lastUpdatedElement.textContent = data.lastUpdated;
+                        totalOrdersElement.textContent = data.orders.length;
+                        displayOrders(data.orders);
+                        loadingElement.style.display = 'none';
+                        ordersGrid.style.display = 'grid';
+                        resolve(data);
+                    })
+                    .catch(function(error) {
+                        console.error('Error loading orders:', error);
+                        loadingElement.style.display = 'none';
+                        errorElement.style.display = 'block';
+                        ordersGrid.style.display = 'none';
+                        reject(error);
+                    });
+            });
+        }
+        
+        function displayOrders(orders) {
+            ordersGrid.innerHTML = '';
+            if (!orders || orders.length === 0) {
+                ordersGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #fbbf24;">No orders found</div>';
+                ordersGrid.style.display = 'grid';
+                return;
+            }
+            const sortedOrders = [...orders].sort((a, b) => {
+                const numA = parseInt(a.orderNo) || 0;
+                const numB = parseInt(b.orderNo) || 0;
+                return numB - numA;
+            });
+            for (let i = 0; i < sortedOrders.length; i++) {
+                const isNew = i < 2;
+                const card = createOrderCard(sortedOrders[i], isNew);
+                ordersGrid.appendChild(card);
+            }
+        }
+        
+        function createOrderCard(order, isNew = false) {
+            const card = document.createElement('div');
+            card.className = 'order-card';
+            const paymentClass = (order.payment && order.payment.includes('Online')) ? 'payment-online' : 'payment-cod';
+            const hasMultipleSareeImages = order.sareeImages && order.sareeImages.length > 1;
+            const hasMultiplePaymentImages = order.paymentImages && order.paymentImages.length > 1;
+            const sareeImages = order.sareeImages || [];
+            const paymentImages = order.paymentImages || [];
+            
+            let sareeHTML = '';
+            if (sareeImages.length > 0) {
+                if (hasMultipleSareeImages) {
+                    sareeHTML = `
+                        <div class="carousel-container">
+                            <div class="image-counter">📸 ${sareeImages.length} photos</div>
+                            <div class="multi-image-indicator">🖼️ Multiple Views</div>
+                            ${sareeImages.map((img, index) => `
+                                <img src="${img}" 
+                                     alt="Saree ${index + 1} - Order ${order.orderNo}" 
+                                     class="carousel-slide ${index === 0 ? 'active' : ''}"
+                                     loading="lazy"
+                                     onclick="openLightbox('${img}', 'saree', ${index}, ${JSON.stringify(sareeImages).replace(/"/g, '&quot;')})"
+                                     onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect width=%22400%22 height=%22300%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2220%22%3EImage ${index + 1}%3C/text%3E%3C/svg%3E'">
+                            `).join('')}
+                            ${sareeImages.length > 1 ? `
+                                <button class="carousel-nav carousel-prev" onclick="carouselPrev(this)">‹</button>
+                                <button class="carousel-nav carousel-next" onclick="carouselNext(this)">›</button>
+                                <div class="carousel-controls">
+                                    ${sareeImages.map((_, index) => `
+                                        <div class="carousel-dot ${index === 0 ? 'active' : ''}" 
+                                             onclick="goToSlide(this, ${index})"></div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    sareeHTML = `
+                        <div class="single-image-container">
+                            ${isNew ? '<div class="newest-indicator">🆕 LATEST ORDER</div>' : ''}
+                            <img src="${sareeImages[0]}" 
+                                 alt="Saree - Order ${order.orderNo}" 
+                                 loading="lazy" 
+                                 onclick="openLightbox('${sareeImages[0]}', 'saree', 0, ${JSON.stringify(sareeImages).replace(/"/g, '&quot;')})"
+                                 onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect width=%22400%22 height=%22300%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2220%22%3EImage Not Found%3C/text%3E%3C/svg%3E'">
+                            <div class="image-label">📦 Saree Photo</div>
+                        </div>
+                    `;
+                }
+            } else {
+                sareeHTML = `
+                    <div class="single-image-container">
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect width=%22400%22 height=%22300%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2220%22%3ENo Image%3C/text%3E%3C/svg%3E" 
+                             alt="No Saree Image">
+                        <div class="image-label">📦 No Photo</div>
+                    </div>
+                `;
+            }
+            
+            let paymentHTML = '';
+            if (paymentImages.length > 0) {
+                if (hasMultiplePaymentImages) {
+                    paymentHTML = `
+                        <div class="payment-proof-section">
+                            <div class="payment-proof-header">
+                                <p class="payment-proof-title">
+                                    💰 Payment Proof Screenshots 
+                                    <span class="payment-count">${paymentImages.length} proofs</span>
+                                </p>
+                            </div>
+                            <div class="payment-grid">
+                                ${paymentImages.map((img, index) => `
+                                    <div class="payment-image-container">
+                                        <img src="${img}" 
+                                             alt="Payment Proof ${index + 1} - Order ${order.orderNo}" 
+                                             loading="lazy"
+                                             onclick="openLightbox('${img}', 'payment', ${index}, ${JSON.stringify(paymentImages).replace(/"/g, '&quot;')})"
+                                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect width=%22400%22 height=%22300%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2220%22%3EPayment ${index + 1}%3C/text%3E%3C/svg%3E'">
+                                        ${index === 0 ? `
+                                            <div class="verified-badge">
+                                                <span style="font-size: 1.125rem;">✓</span>
+                                                <span>VERIFIED</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    paymentHTML = `
+                        <div class="payment-proof-section">
+                            <div class="payment-proof-header">
+                                <p class="payment-proof-title">💰 Payment Proof Screenshot</p>
+                            </div>
+                            <div class="payment-image-container" style="height: 12rem;">
+                                <img src="${paymentImages[0]}" 
+                                     alt="Payment Proof - Order ${order.orderNo}" 
+                                     loading="lazy" 
+                                     onclick="openLightbox('${paymentImages[0]}', 'payment', 0, ${JSON.stringify(paymentImages).replace(/"/g, '&quot;')})"
+                                     onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect width=%22400%22 height=%22300%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2220%22%3EImage Not Found%3C/text%3E%3C/svg%3E'"
+                                     style="width:100%;height:100%;object-fit:cover;border:4px solid #86efac;border-radius:0.5rem;">
+                                <div class="verified-badge">
+                                    <span style="font-size: 1.125rem;">✓</span>
+                                    <span>VERIFIED</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                paymentHTML = `
+                    <div class="payment-proof-section">
+                        <div class="payment-proof-header">
+                            <p class="payment-proof-title">💰 No Payment Proof</p>
+                        </div>
+                        <div class="payment-image-container" style="height: 12rem; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
+                            <div style="text-align: center; color: #6b7280; padding: 2rem;">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+                                <div>No payment proof available</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            card.innerHTML = `
+                <div class="order-header">
+                    <div class="order-number">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                        Order No ${order.orderNo}
+                        ${isNew ? '<span style="margin-left: 8px; background: #ff0000; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">NEW</span>' : ''}
+                    </div>
+                    <span class="order-date">${order.date || 'N/A'}</span>
+                </div>
+                ${sareeHTML}
+                <div class="customer-details">
+                    <div class="customer-name-box">
+                        <p class="customer-name-label">Customer Name</p>
+                        <p class="customer-name">${order.customer || 'N/A'}</p>
+                    </div>
+                    <div class="details-grid">
+                        <div class="detail-box">
+                            <p class="detail-label">📞 Phone</p>
+                            <p class="detail-value">${order.phone || 'N/A'}</p>
+                        </div>
+                        <div class="detail-box">
+                            <p class="detail-label">🕐 Time</p>
+                            <p class="detail-value">${order.time || 'N/A'}</p>
+                        </div>
+                        <div class="detail-box">
+                            <p class="detail-label">📍 State</p>
+                            <p class="detail-value">${order.state || 'N/A'}</p>
+                        </div>
+                        <div class="detail-box">
+                            <p class="detail-label">💳 Payment</p>
+                            <span class="payment-badge ${paymentClass}">
+                                ${order.payment || 'N/A'}
+                                ${hasMultiplePaymentImages ? ' (Multiple Proofs)' : ''}
+                            </span>
+                        </div>
+                    </div>
+                    ${paymentHTML}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function carouselPrev(button) {
+            const container = button.parentElement;
+            const slides = container.querySelectorAll('.carousel-slide');
+            const dots = container.querySelectorAll('.carousel-dot');
+            let currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+            let prevIndex = currentIndex - 1;
+            if (prevIndex < 0) prevIndex = slides.length - 1;
+            slides[currentIndex].classList.remove('active');
+            slides[prevIndex].classList.add('active');
+            dots[currentIndex].classList.remove('active');
+            dots[prevIndex].classList.add('active');
+        }
+        
+        function carouselNext(button) {
+            const container = button.parentElement;
+            const slides = container.querySelectorAll('.carousel-slide');
+            const dots = container.querySelectorAll('.carousel-dot');
+            let currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+            let nextIndex = currentIndex + 1;
+            if (nextIndex >= slides.length) nextIndex = 0;
+            slides[currentIndex].classList.remove('active');
+            slides[nextIndex].classList.add('active');
+            dots[currentIndex].classList.remove('active');
+            dots[nextIndex].classList.add('active');
+        }
+        
+        function goToSlide(dot, index) {
+            const container = dot.closest('.carousel-container');
+            const slides = container.querySelectorAll('.carousel-slide');
+            const dots = container.querySelectorAll('.carousel-dot');
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(d => d.classList.remove('active'));
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
+        }
+        
+        function openLightbox(imageSrc, type, index, imagesArray) {
+            lightboxImages = Array.isArray(imagesArray) ? imagesArray : [imagesArray];
+            lightboxCurrentIndex = index;
+            
+            const lightbox = document.createElement('div');
+            lightbox.className = 'lightbox';
+            lightbox.onclick = function(e) {
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            };
+            
+            const img = document.createElement('img');
+            img.className = 'lightbox-img';
+            img.src = lightboxImages[lightboxCurrentIndex];
+            img.alt = 'Enlarged view';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'lightbox-close';
+            closeBtn.innerHTML = '✕';
+            closeBtn.onclick = closeLightbox;
+            
+            const counter = document.createElement('div');
+            counter.className = 'lightbox-counter';
+            counter.textContent = `${lightboxCurrentIndex + 1} / ${lightboxImages.length}`;
+            
+            let prevBtn = null;
+            let nextBtn = null;
+            
+            if (lightboxImages.length > 1) {
+                prevBtn = document.createElement('button');
+                prevBtn.className = 'lightbox-nav lightbox-prev';
+                prevBtn.innerHTML = '‹';
+                prevBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    lightboxCurrentIndex = (lightboxCurrentIndex - 1 + lightboxImages.length) % lightboxImages.length;
+                    img.src = lightboxImages[lightboxCurrentIndex];
+                    counter.textContent = `${lightboxCurrentIndex + 1} / ${lightboxImages.length}`;
+                };
+                
+                nextBtn = document.createElement('button');
+                nextBtn.className = 'lightbox-nav lightbox-next';
+                nextBtn.innerHTML = '›';
+                nextBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    lightboxCurrentIndex = (lightboxCurrentIndex + 1) % lightboxImages.length;
+                    img.src = lightboxImages[lightboxCurrentIndex];
+                    counter.textContent = `${lightboxCurrentIndex + 1} / ${lightboxImages.length}`;
+                };
+            }
+            
+            document.addEventListener('keydown', handleLightboxKeys);
+            
+            function handleLightboxKeys(e) {
+                if (!lightbox.parentElement) return;
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowLeft' && prevBtn) prevBtn.click();
+                if (e.key === 'ArrowRight' && nextBtn) nextBtn.click();
+            }
+            
+            function closeLightbox() {
+                document.removeEventListener('keydown', handleLightboxKeys);
+                if (lightbox.parentElement) {
+                    document.body.removeChild(lightbox);
+                }
+                document.body.style.overflow = '';
+            }
+            
+            lightbox.appendChild(img);
+            lightbox.appendChild(closeBtn);
+            lightbox.appendChild(counter);
+            if (prevBtn) lightbox.appendChild(prevBtn);
+            if (nextBtn) lightbox.appendChild(nextBtn);
+            
+            document.body.appendChild(lightbox);
+            document.body.style.overflow = 'hidden';
+        }
+    </script>
+</body>
+</html>
