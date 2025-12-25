@@ -1,5 +1,0 @@
-│  Customer: Vikas kumar          │
-│  Phone: 9482552135         │
-│  Date: 22/12/2025  Time: 04:11 PM   │
-│  State: Bengaluru               │
-│  Payment: Online ✓ 

@@ -1,5 +1,0 @@
-│  Customer: P. Rajannadora          │
-│  Phone: 8919907098         │
-│  Date: 23/12/2025  Time: 04:38 PM   │
-│  State:  Andhra Pradesh              │
-│  Payment: COD ✓

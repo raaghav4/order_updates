@@ -1,5 +1,0 @@
-│  Customer: Sneha P             │
-│  Phone: 9742294374           │
-│  Date: 21/12/2025  Time: 6:04 PM   │
-│  State: Karnataka                │
-│  Payment: Online ✓ 

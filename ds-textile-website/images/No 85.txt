@@ -1,5 +1,0 @@
-│  Customer: Lohith Kumar TK          │
-│  Phone: 8050403085         │
-│  Date: 23/12/2025  Time: 10:10 AM   │
-│  State: Karnataka               │
-│  Payment: COD ✓ 

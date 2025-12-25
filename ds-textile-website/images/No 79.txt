@@ -1,6 +1,0 @@
-│  Customer: Seetha            │
-│  Phone: 9751455631
-          8220525728           │
-│  Date: 21/12/2025  Time: 9:23 PM   │
-│  State: Tamil Nadu               │
-│  Payment: Online ✓ 

@@ -1,5 +1,0 @@
-│  Customer: M.Perarasan           │
-│  Phone: 8668116386          │
-│  Date: 22/12/2025  Time: 01:40 PM   │
-│  State: Tamil Nadu               │
-│  Payment: Online ✓ 

@@ -1,5 +1,0 @@
-│  Customer: Anbarasan          │
-│  Phone: 8220364301         │
-│  Date: 22/12/2025  Time: 04:11 PM   │
-│  State: Tamil Nadu               │
-│  Payment: COD ✓ 

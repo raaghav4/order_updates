@@ -1,5 +1,0 @@
-│  Customer: Md Giyas Ansari          │
-│  Phone: 9205161802         │
-│  Date: 22/12/2025  Time: 10:08 PM   │
-│  State: Bengaluru               │
-│  Payment: COD ✓ 

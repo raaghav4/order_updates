@@ -1,5 +1,0 @@
-│  Customer: M. Shanthakumar          │
-│  Phone: 7538859015         │
-│  Date: 22/12/2025  Time: 10:06 PM   │
-│  State: Tamil Nadu               │
-│  Payment: Online ✓ 
